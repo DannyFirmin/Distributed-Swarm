@@ -1,6 +1,7 @@
 -- Suggestions for packages which might be useful:
 
 --  with Ada.Real_Time;         use Ada.Real_Time;
+--  with Swarm_Size;            use Swarm_Size;
 --  with Vectors_3D;            use Vectors_3D;
 
 package Vehicle_Message_Type is

@@ -47,12 +47,6 @@ package Vehicle_Interface is
    procedure Wait_For_Next_Physics_Update;
    -- blocking until the underlying physics engine updated swarm and globe positions.
 
-   -------------------------
-   -- Intended swarm size --
-   -------------------------
-
-   Target_No_of_Elements : constant Positive  := 42;
-
    -----------------
    -- Termination --
    -----------------
