@@ -32,4 +32,8 @@ package Vectors_2D_I is
 
    function "abs" (V : Vector_2D_I) return Float renames Vectors_2Di."abs";
 
+   pragma Warnings (Off, "declaration of ""="" hides predefined operator");
+   function "=" (V_Left, V_Right : Vector_2D_I) return Boolean renames Vectors_2Di."=";
+   pragma Warnings (On, "declaration of ""="" hides predefined operator");
+
 end Vectors_2D_I;

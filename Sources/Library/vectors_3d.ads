@@ -34,4 +34,8 @@ package Vectors_3D is
 
    function "abs" (V : Vector_3D) return Real renames Vectors_3Di."abs";
 
+   pragma Warnings (Off, "declaration of ""="" hides predefined operator");
+   function "=" (V_Left, V_Right : Vector_3D) return Boolean renames Vectors_3Di."=";
+   pragma Warnings (On, "declaration of ""="" hides predefined operator");
+
 end Vectors_3D;

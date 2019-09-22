@@ -33,4 +33,8 @@ package Vectors_4D is
 
    function "abs" (V : Vector_4D) return Real renames Vectors_4Di."abs";
 
+   pragma Warnings (Off, "declaration of ""="" hides predefined operator");
+   function "=" (V_Left, V_Right : Vector_4D) return Boolean renames Vectors_4Di."=";
+   pragma Warnings (On, "declaration of ""="" hides predefined operator");
+
 end Vectors_4D;

@@ -32,4 +32,8 @@ package Vectors_3D_LF is
 
    function "abs" (V : Vector_3D_LF) return Long_Float renames Vectors_3Di."abs";
 
+   pragma Warnings (Off, "declaration of ""="" hides predefined operator");
+   function "=" (V_Left, V_Right : Vector_3D_LF) return Boolean renames Vectors_3Di."=";
+   pragma Warnings (On, "declaration of ""="" hides predefined operator");
+
 end Vectors_3D_LF;

@@ -10,6 +10,7 @@ with Exceptions;                 use Exceptions;
 with Vehicle_Interface;          use Vehicle_Interface;
 --  with Vehicle_Message_Type;       use Vehicle_Message_Type;
 --  with Swarm_Structures;           use Swarm_Structures;
+--  with Swarm_Structures_Base;      use Swarm_Structures_Base;
 --  with Ada.Text_IO; use Ada.Text_IO;
 
 package body Vehicle_Task_Type is
