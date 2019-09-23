@@ -7,5 +7,5 @@ package Vehicle_Task_Type is
       entry Identify (Set_Vehicle_No : Positive; Local_Task_Id : out Task_Id);
    end Vehicle_Task;
 
-   procedure Gohome (Vehicle_No : Positive; Centre_Pos : Positions);
+   procedure Init_Location (Vehicle_No : Positive; Centre_Pos : Positions);
 end Vehicle_Task_Type;
