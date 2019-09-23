@@ -1,3 +1,7 @@
+--
+-- Danny (u6611178), Australia, September 2019
+--
+
 -- Suggestions for packages which might be useful:
 
 with Ada.Real_Time; use Ada.Real_Time;
@@ -11,13 +15,14 @@ package Vehicle_Message_Type is
    -- 6611178 means none or invalid or not specified
    type Inter_Vehicle_Messages is record
       Original_Sender : Positive := NA; -- If it's 6611178 means it's not a real message. Just create it locally somewhere.
-      -- If Original_Sender is manager or Target_Receiver is the leader, highest prority
+      -- If Original_Sender is leader or Target_Receiver is the leader, highest prority
       Target_Receiver : Positive := NA; -- 6611178 is to nobody, ignore.
       -- If it's for me, handle it. If it's for the leader, if newer than local copy, keep passing, otherwise discard.
       Target_Group : Positive := NA;
-      Manager_ID : Positive := NA;
-      Planned_Charge : Boolean := False; -- Manager said it's my turn to charge
+      Leader_ID : Positive := NA;
+      Planned_Charge : Boolean := False; -- Leader said it's my turn to charge
       Skip_Queue : Boolean := False;
+      Double_Globe : Boolean := False;
       Message_Time : Time;
       Predecessor_Positions : Positions;
       Globe_Update_Time : Time;
