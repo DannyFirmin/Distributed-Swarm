@@ -1,4 +1,4 @@
-# Concurrent-Distributed-Sys-Ada-Swarm
-ANU COMP2310 Assignment 1 2019
+# Distributed-Swarm
+ANU Concurrent and Distributed Systems Assignment 2019
 
-This is just a teamplate.
+Copyright by ANU and me.
