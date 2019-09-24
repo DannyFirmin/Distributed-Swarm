@@ -3,7 +3,7 @@
 --
 
 with Ada.Real_Time; use Ada.Real_Time;
---  with Swarm_Size; use Swarm_Size;
+-- with Swarm_Size; use Swarm_Size;
 --  with Vectors_3D; use Vectors_3D;
 with Swarm_Structures_Base; use Swarm_Structures_Base;
 
@@ -23,6 +23,7 @@ package Vehicle_Message_Type is
       Double_Globe : Boolean := False;
       Exile_To_Another_Globe : Boolean := False; -- When found another globe, leader will exile someone there. They will form their own new leader.
       Go_Suicide : Boolean := False;
+      Dying : Boolean := False;
       Globe_Update_Time : Time;
       Globe_Positions : Positions := (0.0, 0.0, 0.0);
 
