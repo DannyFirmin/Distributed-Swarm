@@ -14,8 +14,7 @@ with Vehicle_Interface;          use Vehicle_Interface;
 -- with Swarm_Structures;        use Swarm_Structures;
 -- with Swarm_Structures_Base;   use Swarm_Structures_Base;
 with Ada.Text_IO;                use Ada.Text_IO;
-with Ada.Containers; use Ada.Containers;
-with Ada.Containers.Ordered_Sets;
+
 package body Vehicle_Task_Type is
 
    task body Vehicle_Task is
@@ -39,8 +38,6 @@ package body Vehicle_Task_Type is
       Go_Charging : Boolean := False;
       Skip_Request_Sent : Boolean := False;
       Found_Double_Globe : Boolean := False;
-      package Positive_Sets is new Ada.Containers.Ordered_Sets (Element_Type => Positive);
-      use Positive_Sets;
       Survivors : Positive_Sets.Set;
 
    begin
@@ -205,129 +202,41 @@ package body Vehicle_Task_Type is
 
             if My_Message.Original_Sender /= NA and then Vehicle_No = My_Leader then
                Survivors.Include (Vehicle_No);
-               declare
-                  Starting : Integer;
-                  Ending : Integer;
-               begin
-                  -- Sys just started, Survivors set is building, by default loop 2 .. 120.
-                  if Real (To_Duration (Clock - START_TIME)) < 20.0 then
-                     Starting := 2;
-                     Ending := 120;
-                  else
-                     Starting := 2;
-                     Ending := Integer (Positive_Sets.Length (Survivors));
-                  end if;
-
-                  for i in Starting .. Ending loop -- loop all survivors
-                     while Messages_Waiting loop
-                        Receive (Temp_Message);
-                        if Temp_Message.Globe_Update_Time > My_Globe.Pos_Time then
-                           My_Globe.Pos := Temp_Message.Globe_Positions;
-                           My_Globe.Pos_Time := Temp_Message.Globe_Update_Time;
-                        end if;
-
-                        if Temp_Message.Target_Receiver = Vehicle_No and then Temp_Message.Skip_Queue then
-                           --                Put_Line ("Queue skip sender :" & Positive'Image(Temp_Message.Original_Sender));
-
-                           -- If Survivors are more than Target_No_of_Elements, tell them go die
-                           if Integer (Survivors.Length) > Target_No_of_Elements then
-                              Survivors.Exclude (Temp_Message.Original_Sender);
-                              Temp_Message := (Original_Sender => Vehicle_No,
-                                               Target_Receiver => Temp_Message.Original_Sender,
-                                               Message_Time => Clock,
-                                               Leader_ID => NA,
-                                               Planned_Charge => False,
-                                               Skip_Queue => False,
-                                               Double_Globe => Found_Double_Globe,
-                                               Exile_To_Another_Globe => False,
-                                               Go_Suicide => True,
-                                               Dying => False,
-                                               Globe_Update_Time => My_Globe.Pos_Time,
-                                               Globe_Positions => My_Globe.Pos);
-
-                              Optimised_Send (Message_To_Send => Temp_Message,
-                                              Buffer_Arr => Local_Message_Buffer,
-                                              Arr_Index => Mes_Arr_Index,
-                                              Veh_ID => Vehicle_No,
-                                              Debug_Info => "Leader want u die, queue skip denied");
-                           else
-                              Survivors.Include (Temp_Message.Original_Sender);
-                              Temp_Message := (Original_Sender => Vehicle_No,
-                                               Target_Receiver => Temp_Message.Original_Sender,
-                                               Message_Time => Clock,
-                                               Leader_ID => NA,
-                                               Planned_Charge => True,
-                                               Skip_Queue => False,
-                                               Double_Globe => Found_Double_Globe,
-                                               Exile_To_Another_Globe => False,
-                                               Go_Suicide => False,
-                                               Dying => False,
-                                               Globe_Update_Time => My_Globe.Pos_Time,
-                                               Globe_Positions => My_Globe.Pos);
-
-                              Optimised_Send (Message_To_Send => Temp_Message,
-                                              Buffer_Arr => Local_Message_Buffer,
-                                              Arr_Index => Mes_Arr_Index,
-                                              Veh_ID => Vehicle_No,
-                                              Debug_Info => "Queue Skip approved by leader");
-                           end if;
-                        elsif Temp_Message.Target_Receiver = Vehicle_No and then Temp_Message.Dying then
-                           Survivors.Exclude (Temp_Message.Original_Sender);
-                           Put_Line (Positive'Image (Temp_Message.Original_Sender) & " said it's dying, leader removed it from the set");
-                        elsif Temp_Message.Target_Receiver = Vehicle_No then
-                           --         Put_Line ("someone send to leader: " & Positive'Image(Temp_Message.Original_Sender));
-                           Survivors.Include (Temp_Message.Original_Sender);
-                           delay (0.01);
-                        end if;
-                     end loop;
-
-                     Update_MyGlobes (My_Globe, Found_Double_Globe);
-                     Set_Destination ((My_Globe.Pos (x) + 0.01, My_Globe.Pos (y) + 0.01, My_Globe.Pos (z) + 0.01));
-                     Set_Throttle (1.0); -- Mission for vehicle 1 is to always chase the globe
-
-                     if Integer (Survivors.Length) > Target_No_of_Elements then
-                        Survivors.Exclude (i);
-                        My_Message := (Original_Sender => Vehicle_No,
-                                       Target_Receiver => i,
-                                       Message_Time => Clock,
-                                       Leader_ID => NA,
-                                       Planned_Charge => False,
-                                       Skip_Queue => False,
-                                       Double_Globe => Found_Double_Globe,
-                                       Exile_To_Another_Globe => False,
-                                       Go_Suicide => True,
-                                       Dying => False,
-                                       Globe_Update_Time => My_Globe.Pos_Time,
-                                       Globe_Positions => My_Globe.Pos);
-
-                        Optimised_Send (Message_To_Send => My_Message,
-                                        Buffer_Arr => Local_Message_Buffer,
-                                        Arr_Index => Mes_Arr_Index,
-                                        Veh_ID => Vehicle_No,
-                                        Debug_Info => "Leader want u die");
-                     else
-                        My_Message := (Original_Sender => Vehicle_No,
-                                       Target_Receiver => i,
-                                       Message_Time => Clock,
-                                       Leader_ID => NA,
-                                       Planned_Charge => True,
-                                       Skip_Queue => False,
-                                       Double_Globe => Found_Double_Globe,
-                                       Exile_To_Another_Globe => False,
-                                       Go_Suicide => False,
-                                       Dying => False,
-                                       Globe_Update_Time => My_Globe.Pos_Time,
-                                       Globe_Positions => My_Globe.Pos);
-
-                        Optimised_Send (Message_To_Send => My_Message,
-                                        Buffer_Arr => Local_Message_Buffer,
-                                        Arr_Index => Mes_Arr_Index,
-                                        Veh_ID => Vehicle_No,
-                                        Debug_Info => "Scheduled charging call from leader");
-                     end if;
-                     delay (0.1);
+               if Real (To_Duration (Clock - START_TIME)) < 20.0 then
+                  -- Sys just started, Survivors set is building, by default loop 2 .. 120
+                  for i in 2 .. 120 loop
+                     Leader_Message_Handler (Poll_Target => i,
+                                             My_Globe => My_Globe,
+                                             Found_Double_Globe => Found_Double_Globe,
+                                             Temp_Message => Temp_Message,
+                                             My_Message => My_Message,
+                                             Survivors => Survivors,
+                                             Local_Message_Buffer => Local_Message_Buffer,
+                                             Mes_Arr_Index => Mes_Arr_Index,
+                                             Vehicle_No => Vehicle_No);
                   end loop;
-               end;
+
+               else
+                  declare
+                     -- In case modifing Survivors set during iteration
+                     Temp_Set : Positive_Sets.Set := Survivors;
+                  begin
+                     for i of Survivors loop -- Leader polling all survivors
+                        Leader_Message_Handler (Poll_Target => i,
+                                                My_Globe => My_Globe,
+                                                Found_Double_Globe => Found_Double_Globe,
+                                                Temp_Message => Temp_Message,
+                                                My_Message => My_Message,
+                                                Survivors => Temp_Set,
+                                                Local_Message_Buffer => Local_Message_Buffer,
+                                                Mes_Arr_Index => Mes_Arr_Index,
+                                                Vehicle_No => Vehicle_No);
+                     end loop;
+                     Survivors := Temp_Set;
+                  end;
+               end if;
+
+
                -- The answer to stage D.
                Put_Line ("Elapsed time: " & To_Duration (Clock - START_TIME)'Image);
                Put_Line ("The leader think there are" & Count_Type'Image (Survivors.Length) & " survivors:");
@@ -527,4 +436,115 @@ package body Vehicle_Task_Type is
          My_Globe.Pos_Time := Clock;
       end if;
    end Update_MyGlobes;
+
+   procedure Leader_Message_Handler (Poll_Target : Positive; My_Globe : in out Globe_Pos_I_Know; Found_Double_Globe : in out Boolean; Temp_Message : in out Inter_Vehicle_Messages; My_Message : in out Inter_Vehicle_Messages;  Survivors : in out Positive_Sets.Set; Local_Message_Buffer : in out Messages_Arr; Mes_Arr_Index : in out Messages_Arr_Index_Type; Vehicle_No : Positive) is
+   begin
+      while Messages_Waiting loop
+         Receive (Temp_Message);
+         if Temp_Message.Globe_Update_Time > My_Globe.Pos_Time then
+            My_Globe.Pos := Temp_Message.Globe_Positions;
+            My_Globe.Pos_Time := Temp_Message.Globe_Update_Time;
+         end if;
+
+         if Temp_Message.Target_Receiver = Vehicle_No and then Temp_Message.Skip_Queue then
+            --                Put_Line ("Queue skip sender :" & Positive'Image(Temp_Message.Original_Sender));
+
+            -- If Survivors are more than Target_No_of_Elements, tell them go die
+            if Integer (Survivors.Length) > Target_No_of_Elements then
+               Survivors.Exclude (Temp_Message.Original_Sender);
+               Temp_Message := (Original_Sender => Vehicle_No,
+                                Target_Receiver => Temp_Message.Original_Sender,
+                                Message_Time => Clock,
+                                Leader_ID => NA,
+                                Planned_Charge => False,
+                                Skip_Queue => False,
+                                Double_Globe => Found_Double_Globe,
+                                Exile_To_Another_Globe => False,
+                                Go_Suicide => True,
+                                Dying => False,
+                                Globe_Update_Time => My_Globe.Pos_Time,
+                                Globe_Positions => My_Globe.Pos);
+
+               Optimised_Send (Message_To_Send => Temp_Message,
+                               Buffer_Arr => Local_Message_Buffer,
+                               Arr_Index => Mes_Arr_Index,
+                               Veh_ID => Vehicle_No,
+                               Debug_Info => "Leader want u die, queue skip denied");
+            else
+               Survivors.Include (Temp_Message.Original_Sender);
+               Temp_Message := (Original_Sender => Vehicle_No,
+                                Target_Receiver => Temp_Message.Original_Sender,
+                                Message_Time => Clock,
+                                Leader_ID => NA,
+                                Planned_Charge => True,
+                                Skip_Queue => False,
+                                Double_Globe => Found_Double_Globe,
+                                Exile_To_Another_Globe => False,
+                                Go_Suicide => False,
+                                Dying => False,
+                                Globe_Update_Time => My_Globe.Pos_Time,
+                                Globe_Positions => My_Globe.Pos);
+
+               Optimised_Send (Message_To_Send => Temp_Message,
+                               Buffer_Arr => Local_Message_Buffer,
+                               Arr_Index => Mes_Arr_Index,
+                               Veh_ID => Vehicle_No,
+                               Debug_Info => "Queue Skip approved by leader");
+            end if;
+         elsif Temp_Message.Target_Receiver = Vehicle_No and then Temp_Message.Dying then
+            Survivors.Exclude (Temp_Message.Original_Sender);
+            Put_Line (Positive'Image (Temp_Message.Original_Sender) & " said it's dying, leader removed it from the set");
+         elsif Temp_Message.Target_Receiver = Vehicle_No then
+            --         Put_Line ("someone send to leader: " & Positive'Image(Temp_Message.Original_Sender));
+            Survivors.Include (Temp_Message.Original_Sender);
+            delay (0.01);
+         end if;
+      end loop;
+
+      Update_MyGlobes (My_Globe, Found_Double_Globe);
+      Set_Destination ((My_Globe.Pos (x) + 0.01, My_Globe.Pos (y) + 0.01, My_Globe.Pos (z) + 0.01));
+      Set_Throttle (1.0); -- Mission for vehicle 1 is to always chase the globe
+
+      if Integer (Survivors.Length) > Target_No_of_Elements then
+         Survivors.Exclude (Poll_Target);
+         My_Message := (Original_Sender => Vehicle_No,
+                        Target_Receiver => Poll_Target,
+                        Message_Time => Clock,
+                        Leader_ID => NA,
+                        Planned_Charge => False,
+                        Skip_Queue => False,
+                        Double_Globe => Found_Double_Globe,
+                        Exile_To_Another_Globe => False,
+                        Go_Suicide => True,
+                        Dying => False,
+                        Globe_Update_Time => My_Globe.Pos_Time,
+                        Globe_Positions => My_Globe.Pos);
+
+         Optimised_Send (Message_To_Send => My_Message,
+                         Buffer_Arr => Local_Message_Buffer,
+                         Arr_Index => Mes_Arr_Index,
+                         Veh_ID => Vehicle_No,
+                         Debug_Info => "Leader want u die");
+      else
+         My_Message := (Original_Sender => Vehicle_No,
+                        Target_Receiver => Poll_Target,
+                        Message_Time => Clock,
+                        Leader_ID => NA,
+                        Planned_Charge => True,
+                        Skip_Queue => False,
+                        Double_Globe => Found_Double_Globe,
+                        Exile_To_Another_Globe => False,
+                        Go_Suicide => False,
+                        Dying => False,
+                        Globe_Update_Time => My_Globe.Pos_Time,
+                        Globe_Positions => My_Globe.Pos);
+
+         Optimised_Send (Message_To_Send => My_Message,
+                         Buffer_Arr => Local_Message_Buffer,
+                         Arr_Index => Mes_Arr_Index,
+                         Veh_ID => Vehicle_No,
+                         Debug_Info => "Scheduled charging call from leader");
+      end if;
+      delay (0.1);
+   end Leader_Message_Handler;
 end Vehicle_Task_Type;
