@@ -16,6 +16,13 @@ package Vehicle_Message_Type is
    package Positive_Sets is new Ada.Containers.Ordered_Sets (Element_Type => Positive);
    use Positive_Sets;
 
+   type Globes_I_Know is record
+      Pos : Positions := (0.0, 0.0, 0.0);
+      Pos_Time : Time;
+      Another_Pos :  Positions := (0.0, 0.0, 0.0);
+      Another_Pos_Time : Time;
+   end record;
+
    type Inter_Vehicle_Messages is record
       Original_Sender : Positive := NA; -- If it's 6611178 means it's not a real message. Just create it locally somewhere.
       -- If Original_Sender is leader or Target_Receiver is the leader, highest prority
@@ -29,8 +36,7 @@ package Vehicle_Message_Type is
       Exile_To_Another_Globe : Boolean := False; -- When found another globe, leader will exile someone there. They will form their own new leader.
       Go_Suicide : Boolean := False; -- Leader tell vehicle to die
       Dying : Boolean := False; -- Vehicle tell leader it is dead (If doesn't dead by luck, leader will know from its newer message)
-      Globe_Update_Time : Time; -- One message time is not enough,
-      Globe_Positions : Positions := (0.0, 0.0, 0.0);
+      Globes_Info : Globes_I_Know; -- One message time is not enough,
       Followers : Positive_Sets.Set;
    end record;
 

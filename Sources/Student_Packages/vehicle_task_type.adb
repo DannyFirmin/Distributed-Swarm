@@ -35,7 +35,7 @@ package body Vehicle_Task_Type is
       My_Message : Inter_Vehicle_Messages; -- Make sure this is the latest
       Temp_Message : Inter_Vehicle_Messages;
 
-      My_Globe : Globe_Pos_I_Know;
+      My_Globe : Globes_I_Know;
       Go_Charging : Boolean := False;
       Skip_Request_Sent : Boolean := False;
       Found_Double_Globe : Boolean := False;
@@ -81,8 +81,7 @@ package body Vehicle_Task_Type is
                               Exile_To_Another_Globe => False,
                               Go_Suicide => False,
                               Dying => False,
-                              Globe_Update_Time => My_Globe.Pos_Time,
-                              Globe_Positions => My_Globe.Pos,
+                              Globes_Info => My_Globe,
                               Followers => Followers);
                Optimised_Send (Message_To_Send => My_Message,
                                Buffer_Arr => Local_Message_Buffer,
@@ -99,8 +98,7 @@ package body Vehicle_Task_Type is
                   Receive (Temp_Message);
                   --                    Put_Line (Integer'Image (Vehicle_No) & " got a messge from" & Integer'Image (Temp_Message.Original_Sender) & " at very first");
                   My_Message := Temp_Message;
-                  My_Globe.Pos := My_Message.Globe_Positions;
-                  My_Globe.Pos_Time := My_Message.Globe_Update_Time;
+                  My_Globe := My_Message.Globes_Info;
                   Init_Location (Vehicle_No, My_Globe.Pos, False);
                   if Temp_Message.Target_Receiver = Vehicle_No then
 
@@ -136,9 +134,8 @@ package body Vehicle_Task_Type is
                   --   Put_Line ("messagee to" & Positive'Image(Temp_Message.Target_Receiver));
 
                   -- No matter who the message is sendting to, I will steal its globe position if it is newer
-                  if Temp_Message.Globe_Update_Time > My_Globe.Pos_Time then
-                     My_Globe.Pos := Temp_Message.Globe_Positions;
-                     My_Globe.Pos_Time := Temp_Message.Globe_Update_Time;
+                  if Temp_Message.Globes_Info.Pos_Time > My_Globe.Pos_Time then
+                     My_Globe := Temp_Message.Globes_Info;
                   end if;
                   -- Put_Line (Integer'Image (Vehicle_No) & " got a messge from" & Integer'Image (Temp_Message.Original_Sender));
                   -- Check if this is the latest
@@ -173,8 +170,7 @@ package body Vehicle_Task_Type is
                                              Exile_To_Another_Globe => False,
                                              Go_Suicide => False,
                                              Dying => False,
-                                             Globe_Update_Time => My_Globe.Pos_Time,
-                                             Globe_Positions => My_Globe.Pos,
+                                             Globes_Info => My_Globe,
                                              Followers => Followers);
                               Optimised_Send (Message_To_Send => My_Message,
                                               Buffer_Arr => Local_Message_Buffer,
@@ -210,8 +206,7 @@ package body Vehicle_Task_Type is
                                           Exile_To_Another_Globe => False,
                                           Go_Suicide => False,
                                           Dying => True,
-                                          Globe_Update_Time => My_Globe.Pos_Time,
-                                          Globe_Positions => My_Globe.Pos,
+                                          Globes_Info => My_Globe,
                                           Followers => Followers);
                            Optimised_Send (Message_To_Send => My_Message,
                                            Buffer_Arr => Local_Message_Buffer,
@@ -307,8 +302,7 @@ package body Vehicle_Task_Type is
                               Exile_To_Another_Globe => False,
                               Go_Suicide => False,
                               Dying => False,
-                              Globe_Update_Time => My_Globe.Pos_Time,
-                              Globe_Positions => My_Globe.Pos,
+                              Globes_Info => My_Globe,
                               Followers => Followers);
                Optimised_Send (Message_To_Send => My_Message,
                                Buffer_Arr => Local_Message_Buffer,
@@ -342,8 +336,7 @@ package body Vehicle_Task_Type is
                               Exile_To_Another_Globe => False,
                               Go_Suicide => False,
                               Dying => False,
-                              Globe_Update_Time => My_Globe.Pos_Time,
-                              Globe_Positions => My_Globe.Pos,
+                              Globes_Info => My_Globe,
                               Followers => Followers);
                Optimised_Send (Message_To_Send => My_Message,
                                Buffer_Arr => Local_Message_Buffer,
@@ -364,8 +357,7 @@ package body Vehicle_Task_Type is
                               Exile_To_Another_Globe => False,
                               Go_Suicide => False,
                               Dying => False,
-                              Globe_Update_Time => My_Globe.Pos_Time,
-                              Globe_Positions => My_Globe.Pos,
+                              Globes_Info => My_Globe,
                               Followers => Followers);
                Optimised_Send (Message_To_Send => My_Message,
                                Buffer_Arr => Local_Message_Buffer,
@@ -391,8 +383,7 @@ package body Vehicle_Task_Type is
                                  Exile_To_Another_Globe => False,
                                  Go_Suicide => False,
                                  Dying => False,
-                                 Globe_Update_Time => My_Globe.Pos_Time,
-                                 Globe_Positions => My_Globe.Pos,
+                                 Globes_Info => My_Globe,
                                  Followers => Followers);
                   Optimised_Send (Message_To_Send => My_Message,
                                   Buffer_Arr => Local_Message_Buffer,
@@ -401,7 +392,7 @@ package body Vehicle_Task_Type is
                                   Debug_Info => "Charged. Update globe");
                   Go_Charging := False;
                   Skip_Request_Sent := False;
-                  Init_Location (Vehicle_No, My_Message.Globe_Positions, True);
+                  Init_Location (Vehicle_No, My_Message.Globes_Info.Pos, True);
                   delay (0.2);
                   -- fully charge, have fun to go around for 1s, maybe you will find a new globe?
                end if;
@@ -417,8 +408,7 @@ package body Vehicle_Task_Type is
                                  Exile_To_Another_Globe => False,
                                  Go_Suicide => False,
                                  Dying => True,
-                                 Globe_Update_Time => My_Globe.Pos_Time,
-                                 Globe_Positions => My_Globe.Pos,
+                                 Globes_Info => My_Globe,
                                  Followers => Followers);
                   Optimised_Send (Message_To_Send => My_Message,
                                   Buffer_Arr => Local_Message_Buffer,
@@ -506,7 +496,7 @@ package body Vehicle_Task_Type is
 
    end Optimised_Send;
 
-   procedure Update_MyGlobes (My_Globe : in out Globe_Pos_I_Know; Found_Double_Globe : in out Boolean) is
+   procedure Update_MyGlobes (My_Globe : in out Globes_I_Know; Found_Double_Globe : in out Boolean) is
    begin
       if Energy_Globes_Around'Length = 2 then
          --           Put_Line ("Globe 1 x:" & Real'Image(Energy_Globes_Around (1).Position (x)) & ". y:" & Real'Image(Energy_Globes_Around (1).Position (y)) & ". z:" & Real'Image(Energy_Globes_Around (1).Position (z)));
@@ -529,13 +519,12 @@ package body Vehicle_Task_Type is
       end if;
    end Update_MyGlobes;
 
-   procedure Leader_Message_Handler (Poll_Target : Positive; My_Globe : in out Globe_Pos_I_Know; Found_Double_Globe : in out Boolean; Temp_Message : in out Inter_Vehicle_Messages; My_Message : in out Inter_Vehicle_Messages;  Followers : in out Positive_Sets.Set; Local_Message_Buffer : in out Messages_Arr; Mes_Arr_Index : in out Messages_Arr_Index_Type; Vehicle_No : Positive) is
+   procedure Leader_Message_Handler (Poll_Target : Positive; My_Globe : in out Globes_I_Know; Found_Double_Globe : in out Boolean; Temp_Message : in out Inter_Vehicle_Messages; My_Message : in out Inter_Vehicle_Messages;  Followers : in out Positive_Sets.Set; Local_Message_Buffer : in out Messages_Arr; Mes_Arr_Index : in out Messages_Arr_Index_Type; Vehicle_No : Positive) is
    begin
       while Messages_Waiting loop
          Receive (Temp_Message);
-         if Temp_Message.Globe_Update_Time > My_Globe.Pos_Time then
-            My_Globe.Pos := Temp_Message.Globe_Positions;
-            My_Globe.Pos_Time := Temp_Message.Globe_Update_Time;
+         if Temp_Message.Globes_Info.Pos_Time > My_Globe.Pos_Time then
+            My_Globe := Temp_Message.Globes_Info;
          end if;
 
          if Temp_Message.Target_Receiver = Vehicle_No and then Temp_Message.Skip_Queue then
@@ -554,8 +543,7 @@ package body Vehicle_Task_Type is
                                 Exile_To_Another_Globe => False,
                                 Go_Suicide => True,
                                 Dying => False,
-                                Globe_Update_Time => My_Globe.Pos_Time,
-                                Globe_Positions => My_Globe.Pos,
+                                Globes_Info => My_Globe,
                                 Followers => Followers);
 
                Optimised_Send (Message_To_Send => Temp_Message,
@@ -575,8 +563,7 @@ package body Vehicle_Task_Type is
                                 Exile_To_Another_Globe => False,
                                 Go_Suicide => False,
                                 Dying => False,
-                                Globe_Update_Time => My_Globe.Pos_Time,
-                                Globe_Positions => My_Globe.Pos,
+                                Globes_Info => My_Globe,
                                 Followers => Followers);
 
                Optimised_Send (Message_To_Send => Temp_Message,
@@ -611,8 +598,7 @@ package body Vehicle_Task_Type is
                         Exile_To_Another_Globe => False,
                         Go_Suicide => True,
                         Dying => False,
-                        Globe_Update_Time => My_Globe.Pos_Time,
-                        Globe_Positions => My_Globe.Pos,
+                        Globes_Info => My_Globe,
                         Followers => Followers);
 
          Optimised_Send (Message_To_Send => My_Message,
@@ -631,8 +617,7 @@ package body Vehicle_Task_Type is
                         Exile_To_Another_Globe => False,
                         Go_Suicide => False,
                         Dying => False,
-                        Globe_Update_Time => My_Globe.Pos_Time,
-                        Globe_Positions => My_Globe.Pos,
+                        Globes_Info => My_Globe,
                         Followers => Followers);
 
          Optimised_Send (Message_To_Send => My_Message,
