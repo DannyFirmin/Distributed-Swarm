@@ -14,6 +14,7 @@ with Vehicle_Interface;          use Vehicle_Interface;
 -- with Swarm_Structures;        use Swarm_Structures;
 -- with Swarm_Structures_Base;   use Swarm_Structures_Base;
 with Ada.Text_IO;                use Ada.Text_IO;
+with Ada.Containers; use Ada.Containers;
 
 package body Vehicle_Task_Type is
 
@@ -38,7 +39,9 @@ package body Vehicle_Task_Type is
       Go_Charging : Boolean := False;
       Skip_Request_Sent : Boolean := False;
       Found_Double_Globe : Boolean := False;
-      Survivors : Positive_Sets.Set;
+      Followers : Positive_Sets.Set;
+      Last_Seen_Leader : Time := START_TIME;
+      Leading_Time : Time := Clock;
 
    begin
 
@@ -71,7 +74,7 @@ package body Vehicle_Task_Type is
                My_Message := (Original_Sender => Vehicle_No,
                               Target_Receiver => NA,
                               Message_Time => Clock,
-                              Leader_ID => NA,
+                              New_LeaderID => NA,
                               Planned_Charge => False,
                               Skip_Queue => False,
                               Double_Globe => Found_Double_Globe,
@@ -79,7 +82,8 @@ package body Vehicle_Task_Type is
                               Go_Suicide => False,
                               Dying => False,
                               Globe_Update_Time => My_Globe.Pos_Time,
-                              Globe_Positions => My_Globe.Pos);
+                              Globe_Positions => My_Globe.Pos,
+                              Followers => Followers);
                Optimised_Send (Message_To_Send => My_Message,
                                Buffer_Arr => Local_Message_Buffer,
                                Arr_Index => Mes_Arr_Index,
@@ -136,14 +140,58 @@ package body Vehicle_Task_Type is
                      My_Globe.Pos := Temp_Message.Globe_Positions;
                      My_Globe.Pos_Time := Temp_Message.Globe_Update_Time;
                   end if;
+                  -- Put_Line (Integer'Image (Vehicle_No) & " got a messge from" & Integer'Image (Temp_Message.Original_Sender));
+                  -- Check if this is the latest
+                  if Temp_Message.Message_Time > My_Message.Message_Time then
+                     -- Put_Line (Integer'Image (Vehicle_No) & " find out this is a NEW message");
+                     My_Message := Temp_Message; -- Take the latest message
+                     -- Update last seen leader time
+                     if My_Message.Original_Sender = My_Leader then
+                        Last_Seen_Leader := My_Message.Message_Time;
+                     end if;
 
-                  -- Check if this message is for me
-                  if Temp_Message.Target_Receiver = Vehicle_No then
-                     --                       Put_Line (Integer'Image (Vehicle_No) & " got a messge from" & Integer'Image (Temp_Message.Original_Sender));
-                     -- Check if this is the latest
-                     if Temp_Message.Message_Time > My_Message.Message_Time then
-                        --                          Put_Line (Integer'Image (Vehicle_No) & " find out this is a NEW message");
-                        My_Message := Temp_Message; -- Take the latest message
+                     -- My fellow vehicle, take this in case I become a leader someday
+                     -- Will be also useful to know my group mates for splitting
+                     if Vehicle_No /= My_Leader then
+                        Followers := My_Message.Followers;
+                     end if;
+
+                     -- Check if this message is for me
+                     if My_Message.Target_Receiver = Vehicle_No then
+
+                        if My_Message.New_LeaderID = Vehicle_No then
+                           -- Tell everyone I am the new leader
+                           My_Leader := Vehicle_No;
+                           for Follower of Followers loop
+                              My_Message := (Original_Sender => Vehicle_No,
+                                             Target_Receiver => Follower,
+                                             Message_Time => Clock,
+                                             New_LeaderID => Vehicle_No,
+                                             Planned_Charge => False,
+                                             Skip_Queue => False,
+                                             Double_Globe => Found_Double_Globe,
+                                             Exile_To_Another_Globe => False,
+                                             Go_Suicide => False,
+                                             Dying => False,
+                                             Globe_Update_Time => My_Globe.Pos_Time,
+                                             Globe_Positions => My_Globe.Pos,
+                                             Followers => Followers);
+                              Optimised_Send (Message_To_Send => My_Message,
+                                              Buffer_Arr => Local_Message_Buffer,
+                                              Arr_Index => Mes_Arr_Index,
+                                              Veh_ID => Vehicle_No,
+                                              Debug_Info => "new leader!");
+                           end loop;
+                           Put_Line (Integer'Image (My_Leader) & " is the new leader");
+                           Leading_Time := Clock;
+                        end if;
+
+                        if My_Message.New_LeaderID /= NA and then My_Message.New_LeaderID /= My_Leader then
+                           My_Leader := My_Message.New_LeaderID;
+                           Put_Line (Integer'Image (Vehicle_No) & " has a new leader" & Integer'Image (My_Leader));
+                           Leading_Time := Clock;
+                        end if;
+
                         if Vehicle_No = My_Leader then -- a leader will always follow the globe
                            Set_Destination (My_Globe.Pos);
                            Set_Throttle (1.0);
@@ -155,7 +203,7 @@ package body Vehicle_Task_Type is
                            My_Message := (Original_Sender => Vehicle_No,
                                           Target_Receiver => My_Leader,
                                           Message_Time => Clock,
-                                          Leader_ID => NA,
+                                          New_LeaderID => NA,
                                           Planned_Charge => False,
                                           Skip_Queue => False,
                                           Double_Globe => Found_Double_Globe,
@@ -163,7 +211,8 @@ package body Vehicle_Task_Type is
                                           Go_Suicide => False,
                                           Dying => True,
                                           Globe_Update_Time => My_Globe.Pos_Time,
-                                          Globe_Positions => My_Globe.Pos);
+                                          Globe_Positions => My_Globe.Pos,
+                                          Followers => Followers);
                            Optimised_Send (Message_To_Send => My_Message,
                                            Buffer_Arr => Local_Message_Buffer,
                                            Arr_Index => Mes_Arr_Index,
@@ -178,13 +227,14 @@ package body Vehicle_Task_Type is
                               --          Put_Line ("I'm fine this time, let others go, reported by Veh." & Integer'Image (Vehicle_No));
                               null;
                            else
-                              Put_Line (Integer'Image (Vehicle_No) & " Copy that, coming");
+                              --        Put_Line (Integer'Image (Vehicle_No) & " Copy that, coming");
                               Set_Destination (My_Globe.Pos);
                               Set_Throttle (1.0);
                               Go_Charging := True;
                            end if;
                            -- delayay (0.2);
                         end if;
+
                      end if;
 
                   else
@@ -201,16 +251,16 @@ package body Vehicle_Task_Type is
             end loop Message_loop;
 
             if My_Message.Original_Sender /= NA and then Vehicle_No = My_Leader then
-               Survivors.Include (Vehicle_No);
-               if Real (To_Duration (Clock - START_TIME)) < 20.0 then
-                  -- Sys just started, Survivors set is building, by default loop 2 .. 120
+               Followers.Include (Vehicle_No);
+               if Real (To_Duration (Clock - Leading_Time)) < 20.0 then
+                  -- Sys just started, Followers set is building, by default loop 2 .. 120
                   for i in 2 .. 120 loop
                      Leader_Message_Handler (Poll_Target => i,
                                              My_Globe => My_Globe,
                                              Found_Double_Globe => Found_Double_Globe,
                                              Temp_Message => Temp_Message,
                                              My_Message => My_Message,
-                                             Survivors => Survivors,
+                                             Followers => Followers,
                                              Local_Message_Buffer => Local_Message_Buffer,
                                              Mes_Arr_Index => Mes_Arr_Index,
                                              Vehicle_No => Vehicle_No);
@@ -218,37 +268,53 @@ package body Vehicle_Task_Type is
 
                else
                   declare
-                     -- In case modifing Survivors set during iteration
-                     Temp_Set : Positive_Sets.Set := Survivors;
+                     -- In case modifing Followers set during iteration
+                     Temp_Set : Positive_Sets.Set := Followers;
                   begin
-                     for i of Survivors loop -- Leader polling all survivors
+                     for i of Followers loop -- Leader polling all followers
                         Leader_Message_Handler (Poll_Target => i,
                                                 My_Globe => My_Globe,
                                                 Found_Double_Globe => Found_Double_Globe,
                                                 Temp_Message => Temp_Message,
                                                 My_Message => My_Message,
-                                                Survivors => Temp_Set,
+                                                Followers => Temp_Set,
                                                 Local_Message_Buffer => Local_Message_Buffer,
                                                 Mes_Arr_Index => Mes_Arr_Index,
                                                 Vehicle_No => Vehicle_No);
                      end loop;
-                     Survivors := Temp_Set;
+                     Followers := Temp_Set;
                   end;
                end if;
 
-
                -- The answer to stage D.
-               Put_Line ("Elapsed time: " & To_Duration (Clock - START_TIME)'Image);
-               Put_Line ("The leader think there are" & Count_Type'Image (Survivors.Length) & " survivors:");
-               for E of Survivors loop
-                  Put_Line ("- " & Integer'Image (E));
-               end loop;
+--                 Put_Line ("The leader think there are" & Count_Type'Image (Followers.Length) & " followers:");
+--                 for E of Followers loop
+--                    Put_Line ("- " & Integer'Image (E));
+--                 end loop;
 
             end if;
 
             if Vehicle_No = My_Leader and then Current_Charge < BATTERY_LEVEL_DEAD then
-               Survivors.Exclude (Vehicle_No);
-               -- TODO: Pass leadership to others
+               Followers.Exclude (Vehicle_No);
+               -- Pass leadership to others when dying
+               My_Message := (Original_Sender => Vehicle_No,
+                              Target_Receiver => Positive (Followers.First_Element),
+                              Message_Time => Clock,
+                              New_LeaderID => Positive (Followers.First_Element), -- new leader
+                              Planned_Charge => False,
+                              Skip_Queue => False,
+                              Double_Globe => Found_Double_Globe,
+                              Exile_To_Another_Globe => False,
+                              Go_Suicide => False,
+                              Dying => False,
+                              Globe_Update_Time => My_Globe.Pos_Time,
+                              Globe_Positions => My_Globe.Pos,
+                              Followers => Followers);
+               Optimised_Send (Message_To_Send => My_Message,
+                               Buffer_Arr => Local_Message_Buffer,
+                               Arr_Index => Mes_Arr_Index,
+                               Veh_ID => Vehicle_No,
+                               Debug_Info => "new leader!");
             end if;
 
             if My_Message.Original_Sender /= NA and then not Go_Charging and then Vehicle_No /= My_Leader then
@@ -263,12 +329,35 @@ package body Vehicle_Task_Type is
                                Debug_Info => "Normal message");
             end if;
 
+            if Last_Seen_Leader /= START_TIME and then Real (To_Duration (Clock - Last_Seen_Leader)) > 10.0 then
+               Followers.Exclude (My_Leader);
+               My_Leader := Followers.First_Element;
+               My_Message := (Original_Sender => Vehicle_No,
+                              Target_Receiver => Positive (Followers.First_Element),
+                              Message_Time => Clock,
+                              New_LeaderID => Positive (Followers.First_Element), -- new leader
+                              Planned_Charge => False,
+                              Skip_Queue => False,
+                              Double_Globe => Found_Double_Globe,
+                              Exile_To_Another_Globe => False,
+                              Go_Suicide => False,
+                              Dying => False,
+                              Globe_Update_Time => My_Globe.Pos_Time,
+                              Globe_Positions => My_Globe.Pos,
+                              Followers => Followers);
+               Optimised_Send (Message_To_Send => My_Message,
+                               Buffer_Arr => Local_Message_Buffer,
+                               Arr_Index => Mes_Arr_Index,
+                               Veh_ID => Vehicle_No,
+                               Debug_Info => "new leader!");
+            end if;
+
             if Current_Charge < BATTERY_LEVEL_LOW and then Current_Charge > BATTERY_LEVEL_CRITICAL and then not Skip_Request_Sent then
                Skip_Request_Sent := True;
                My_Message := (Original_Sender => Vehicle_No,
                               Target_Receiver => My_Leader,
                               Message_Time => Clock,
-                              Leader_ID => NA,
+                              New_LeaderID => NA,
                               Planned_Charge => False,
                               Skip_Queue => True,
                               Double_Globe => Found_Double_Globe,
@@ -276,7 +365,8 @@ package body Vehicle_Task_Type is
                               Go_Suicide => False,
                               Dying => False,
                               Globe_Update_Time => My_Globe.Pos_Time,
-                              Globe_Positions => My_Globe.Pos);
+                              Globe_Positions => My_Globe.Pos,
+                              Followers => Followers);
                Optimised_Send (Message_To_Send => My_Message,
                                Buffer_Arr => Local_Message_Buffer,
                                Arr_Index => Mes_Arr_Index,
@@ -294,7 +384,7 @@ package body Vehicle_Task_Type is
                   My_Message := (Original_Sender => Vehicle_No,
                                  Target_Receiver => My_Leader,
                                  Message_Time => Clock,
-                                 Leader_ID => NA,
+                                 New_LeaderID => NA,
                                  Planned_Charge => False,
                                  Skip_Queue => False,
                                  Double_Globe => Found_Double_Globe,
@@ -302,7 +392,8 @@ package body Vehicle_Task_Type is
                                  Go_Suicide => False,
                                  Dying => False,
                                  Globe_Update_Time => My_Globe.Pos_Time,
-                                 Globe_Positions => My_Globe.Pos);
+                                 Globe_Positions => My_Globe.Pos,
+                                 Followers => Followers);
                   Optimised_Send (Message_To_Send => My_Message,
                                   Buffer_Arr => Local_Message_Buffer,
                                   Arr_Index => Mes_Arr_Index,
@@ -319,7 +410,7 @@ package body Vehicle_Task_Type is
                   My_Message := (Original_Sender => Vehicle_No,
                                  Target_Receiver => My_Leader,
                                  Message_Time => Clock,
-                                 Leader_ID => NA,
+                                 New_LeaderID => NA,
                                  Planned_Charge => False,
                                  Skip_Queue => False,
                                  Double_Globe => Found_Double_Globe,
@@ -327,7 +418,8 @@ package body Vehicle_Task_Type is
                                  Go_Suicide => False,
                                  Dying => True,
                                  Globe_Update_Time => My_Globe.Pos_Time,
-                                 Globe_Positions => My_Globe.Pos);
+                                 Globe_Positions => My_Globe.Pos,
+                                 Followers => Followers);
                   Optimised_Send (Message_To_Send => My_Message,
                                   Buffer_Arr => Local_Message_Buffer,
                                   Arr_Index => Mes_Arr_Index,
@@ -407,7 +499,7 @@ package body Vehicle_Task_Type is
          --           if Debug_Info /= "Forward a message" and then Debug_Info /= "Forward a message from begining" then
          --              Put_Line (Integer'Image (Veh_ID) & " send a messge from" & Integer'Image (Message_To_Send.Original_Sender) & " to" & Integer'Image (Message_To_Send.Target_Receiver) & ". Mes Time:" & Duration'Image (To_Duration (Message_To_Send.Message_Time - START_TIME)) & ". DEBUG_INFO: " & Debug_Info);
          --           end if;
-         if Debug_Info = "Leader want u die" or else Debug_Info = "Leader want u die, queue skip denied" then
+         if Debug_Info = "new leader!" then
             Put_Line (Integer'Image (Veh_ID) & " send a messge from" & Integer'Image (Message_To_Send.Original_Sender) & " to" & Integer'Image (Message_To_Send.Target_Receiver) & ". Mes Time:" & Duration'Image (To_Duration (Message_To_Send.Message_Time - START_TIME)) & ". DEBUG_INFO: " & Debug_Info);
          end if;
       end if;
@@ -437,7 +529,7 @@ package body Vehicle_Task_Type is
       end if;
    end Update_MyGlobes;
 
-   procedure Leader_Message_Handler (Poll_Target : Positive; My_Globe : in out Globe_Pos_I_Know; Found_Double_Globe : in out Boolean; Temp_Message : in out Inter_Vehicle_Messages; My_Message : in out Inter_Vehicle_Messages;  Survivors : in out Positive_Sets.Set; Local_Message_Buffer : in out Messages_Arr; Mes_Arr_Index : in out Messages_Arr_Index_Type; Vehicle_No : Positive) is
+   procedure Leader_Message_Handler (Poll_Target : Positive; My_Globe : in out Globe_Pos_I_Know; Found_Double_Globe : in out Boolean; Temp_Message : in out Inter_Vehicle_Messages; My_Message : in out Inter_Vehicle_Messages;  Followers : in out Positive_Sets.Set; Local_Message_Buffer : in out Messages_Arr; Mes_Arr_Index : in out Messages_Arr_Index_Type; Vehicle_No : Positive) is
    begin
       while Messages_Waiting loop
          Receive (Temp_Message);
@@ -449,13 +541,13 @@ package body Vehicle_Task_Type is
          if Temp_Message.Target_Receiver = Vehicle_No and then Temp_Message.Skip_Queue then
             --                Put_Line ("Queue skip sender :" & Positive'Image(Temp_Message.Original_Sender));
 
-            -- If Survivors are more than Target_No_of_Elements, tell them go die
-            if Integer (Survivors.Length) > Target_No_of_Elements then
-               Survivors.Exclude (Temp_Message.Original_Sender);
+            -- If Followers are more than Target_No_of_Elements, tell them die
+            if Integer (Followers.Length) > Target_No_of_Elements then
+               Followers.Exclude (Temp_Message.Original_Sender);
                Temp_Message := (Original_Sender => Vehicle_No,
                                 Target_Receiver => Temp_Message.Original_Sender,
                                 Message_Time => Clock,
-                                Leader_ID => NA,
+                                New_LeaderID => NA,
                                 Planned_Charge => False,
                                 Skip_Queue => False,
                                 Double_Globe => Found_Double_Globe,
@@ -463,7 +555,8 @@ package body Vehicle_Task_Type is
                                 Go_Suicide => True,
                                 Dying => False,
                                 Globe_Update_Time => My_Globe.Pos_Time,
-                                Globe_Positions => My_Globe.Pos);
+                                Globe_Positions => My_Globe.Pos,
+                                Followers => Followers);
 
                Optimised_Send (Message_To_Send => Temp_Message,
                                Buffer_Arr => Local_Message_Buffer,
@@ -471,11 +564,11 @@ package body Vehicle_Task_Type is
                                Veh_ID => Vehicle_No,
                                Debug_Info => "Leader want u die, queue skip denied");
             else
-               Survivors.Include (Temp_Message.Original_Sender);
+               Followers.Include (Temp_Message.Original_Sender);
                Temp_Message := (Original_Sender => Vehicle_No,
                                 Target_Receiver => Temp_Message.Original_Sender,
                                 Message_Time => Clock,
-                                Leader_ID => NA,
+                                New_LeaderID => NA,
                                 Planned_Charge => True,
                                 Skip_Queue => False,
                                 Double_Globe => Found_Double_Globe,
@@ -483,7 +576,8 @@ package body Vehicle_Task_Type is
                                 Go_Suicide => False,
                                 Dying => False,
                                 Globe_Update_Time => My_Globe.Pos_Time,
-                                Globe_Positions => My_Globe.Pos);
+                                Globe_Positions => My_Globe.Pos,
+                                Followers => Followers);
 
                Optimised_Send (Message_To_Send => Temp_Message,
                                Buffer_Arr => Local_Message_Buffer,
@@ -492,11 +586,11 @@ package body Vehicle_Task_Type is
                                Debug_Info => "Queue Skip approved by leader");
             end if;
          elsif Temp_Message.Target_Receiver = Vehicle_No and then Temp_Message.Dying then
-            Survivors.Exclude (Temp_Message.Original_Sender);
+            Followers.Exclude (Temp_Message.Original_Sender);
             Put_Line (Positive'Image (Temp_Message.Original_Sender) & " said it's dying, leader removed it from the set");
          elsif Temp_Message.Target_Receiver = Vehicle_No then
             --         Put_Line ("someone send to leader: " & Positive'Image(Temp_Message.Original_Sender));
-            Survivors.Include (Temp_Message.Original_Sender);
+            Followers.Include (Temp_Message.Original_Sender);
             delay (0.01);
          end if;
       end loop;
@@ -505,12 +599,12 @@ package body Vehicle_Task_Type is
       Set_Destination ((My_Globe.Pos (x) + 0.01, My_Globe.Pos (y) + 0.01, My_Globe.Pos (z) + 0.01));
       Set_Throttle (1.0); -- Mission for vehicle 1 is to always chase the globe
 
-      if Integer (Survivors.Length) > Target_No_of_Elements then
-         Survivors.Exclude (Poll_Target);
+      if Integer (Followers.Length) > Target_No_of_Elements then
+         Followers.Exclude (Poll_Target);
          My_Message := (Original_Sender => Vehicle_No,
                         Target_Receiver => Poll_Target,
                         Message_Time => Clock,
-                        Leader_ID => NA,
+                        New_LeaderID => NA,
                         Planned_Charge => False,
                         Skip_Queue => False,
                         Double_Globe => Found_Double_Globe,
@@ -518,7 +612,8 @@ package body Vehicle_Task_Type is
                         Go_Suicide => True,
                         Dying => False,
                         Globe_Update_Time => My_Globe.Pos_Time,
-                        Globe_Positions => My_Globe.Pos);
+                        Globe_Positions => My_Globe.Pos,
+                        Followers => Followers);
 
          Optimised_Send (Message_To_Send => My_Message,
                          Buffer_Arr => Local_Message_Buffer,
@@ -529,7 +624,7 @@ package body Vehicle_Task_Type is
          My_Message := (Original_Sender => Vehicle_No,
                         Target_Receiver => Poll_Target,
                         Message_Time => Clock,
-                        Leader_ID => NA,
+                        New_LeaderID => NA,
                         Planned_Charge => True,
                         Skip_Queue => False,
                         Double_Globe => Found_Double_Globe,
@@ -537,7 +632,8 @@ package body Vehicle_Task_Type is
                         Go_Suicide => False,
                         Dying => False,
                         Globe_Update_Time => My_Globe.Pos_Time,
-                        Globe_Positions => My_Globe.Pos);
+                        Globe_Positions => My_Globe.Pos,
+                        Followers => Followers);
 
          Optimised_Send (Message_To_Send => My_Message,
                          Buffer_Arr => Local_Message_Buffer,
