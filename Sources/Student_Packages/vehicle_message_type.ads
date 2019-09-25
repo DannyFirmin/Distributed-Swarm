@@ -22,8 +22,8 @@ package Vehicle_Message_Type is
       Skip_Queue : Boolean := False;
       Double_Globe : Boolean := False;
       Exile_To_Another_Globe : Boolean := False; -- When found another globe, leader will exile someone there. They will form their own new leader.
-      Go_Suicide : Boolean := False;
-      Dying : Boolean := False;
+      Go_Suicide : Boolean := False; -- Leader tell vehicle to die
+      Dying : Boolean := False; -- Vehicle tell leader it is dead (If doesn't dead by luck, leader will know from its newer message)
       Globe_Update_Time : Time;
       Globe_Positions : Positions := (0.0, 0.0, 0.0);
 
