@@ -12,8 +12,6 @@ package Vehicle_Message_Type is
    type Globes_I_Know is record
       Pos : Positions := (0.0, 0.0, 0.0);
       Pos_Time : Time;
-      Another_Pos :  Positions := (0.0, 0.0, 0.0);
-      Another_Pos_Time : Time;
    end record;
 
    type Inter_Vehicle_Messages is record

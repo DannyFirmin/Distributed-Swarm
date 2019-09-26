@@ -424,12 +424,12 @@ package body Vehicle_Task_Type is
          Buffer_Arr (Arr_Index) := Message_To_Send;
          Arr_Index := Arr_Index + 1;
          Send (Message_To_Send);
---           if Debug_Info /= "Forward a message" and then Debug_Info /= "Forward a message from begining" then
---              Put_Line (Integer'Image (Veh_ID) & " send a messge from" & Integer'Image (Message_To_Send.Original_Sender) & " to" & Integer'Image (Message_To_Send.Target_Receiver) & ". Mes Time:" & Duration'Image (To_Duration (Message_To_Send.Message_Time - START_TIME)) & ". DEBUG_INFO: " & Debug_Info);
---           end if;
---           if Debug_Info = "new leadera" or else Debug_Info = "new leader 1" or else Debug_Info = "new leader 2" then
---              Put_Line (Integer'Image (Veh_ID) & " send a messge from" & Integer'Image (Message_To_Send.Original_Sender) & " to" & Integer'Image (Message_To_Send.Target_Receiver) & ". Mes Time:" & Duration'Image (To_Duration (Message_To_Send.Message_Time - START_TIME)) & ". DEBUG_INFO: " & Debug_Info);
---           end if;
+         --           if Debug_Info /= "Forward a message" and then Debug_Info /= "Forward a message from begining" then
+         --              Put_Line (Integer'Image (Veh_ID) & " send a messge from" & Integer'Image (Message_To_Send.Original_Sender) & " to" & Integer'Image (Message_To_Send.Target_Receiver) & ". Mes Time:" & Duration'Image (To_Duration (Message_To_Send.Message_Time - START_TIME)) & ". DEBUG_INFO: " & Debug_Info);
+         --           end if;
+         if Debug_Info = "Queue skipping request" or else Debug_Info = "Queue Skip approved by leader" then
+            Put_Line (Integer'Image (Veh_ID) & " send a messge from" & Integer'Image (Message_To_Send.Original_Sender) & " to" & Integer'Image (Message_To_Send.Target_Receiver) & ". Mes Time:" & Duration'Image (To_Duration (Message_To_Send.Message_Time - START_TIME)) & ". DEBUG_INFO: " & Debug_Info);
+         end if;
       end if;
 
    end Optimised_Send;
@@ -437,11 +437,6 @@ package body Vehicle_Task_Type is
    procedure Update_MyGlobes (My_Globe : in out Globes_I_Know; Multi_Globes : in out Boolean) is
    begin
       if Energy_Globes_Around'Length = 2 then
-         --           Put_Line ("Globe 1 x:" & Real'Image(Energy_Globes_Around (1).Position (x)) & ". y:" & Real'Image(Energy_Globes_Around (1).Position (y)) & ". z:" & Real'Image(Energy_Globes_Around (1).Position (z)));
-         --           Put_Line ("Globe 2 x:" & Real'Image(Energy_Globes_Around (2).Position (x)) & ". y:" & Real'Image(Energy_Globes_Around (2).Position (y)) & ". z:" & Real'Image(Energy_Globes_Around (2).Position (z)));
-         --           Put_Line (Real'Image(abs (Energy_Globes_Around (1).Position - My_Globe.Pos)));
-         --           Put_Line (Real'Image(abs (Energy_Globes_Around (2).Position - My_Globe.Pos)));
-         --           Put_Line ("");
          Multi_Globes := True;
          if abs (Energy_Globes_Around (1).Position - My_Globe.Pos) < abs (Energy_Globes_Around (2).Position - My_Globe.Pos)  then
             My_Globe.Pos := Energy_Globes_Around (1).Position;
@@ -506,9 +501,7 @@ package body Vehicle_Task_Type is
             end if;
          elsif Temp_Message.Target_Receiver = Vehicle_No and then Temp_Message.Dying then
             Followers.Exclude (Temp_Message.Original_Sender);
-            Put_Line (Positive'Image (Temp_Message.Original_Sender) & " said it's dying, leader removed it from the set");
          elsif Temp_Message.Target_Receiver = Vehicle_No then
-            -- Put_Line ("someone send a message to leader: " & Positive'Image(Temp_Message.Original_Sender));
             Followers.Include (Temp_Message.Original_Sender);
             delay (0.01);
          end if;
