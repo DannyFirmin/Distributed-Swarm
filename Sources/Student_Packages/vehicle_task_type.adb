@@ -383,9 +383,9 @@ package body Vehicle_Task_Type is
       when 6 =>
          Set_Destination ((Centre_Pos (x), Centre_Pos (y) - 0.2, Centre_Pos (z)));
       when 7 =>
-         Set_Destination ((Centre_Pos (x) - 0.1, Centre_Pos (y), Centre_Pos (z) - 0.2));
+         Set_Destination ((Centre_Pos (x) - 0.05, Centre_Pos (y), Centre_Pos (z) - 0.2));
       when 8 =>
-         Set_Destination ((Centre_Pos (x) - 0.2, Centre_Pos (y), Centre_Pos (z)));
+         Set_Destination ((Centre_Pos (x) - 0.1, Centre_Pos (y), Centre_Pos (z)));
       when 9 =>
          Set_Destination ((Centre_Pos (x) - 0.1, Centre_Pos (y) + 0.1, Centre_Pos (z) + 0.2));
       when 10 =>
