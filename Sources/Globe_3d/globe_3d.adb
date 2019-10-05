@@ -9,7 +9,7 @@ with GL.Errors,
 with Ada.Characters.Handling;           use Ada.Characters.Handling;
 with Ada.Exceptions;                    use Ada.Exceptions;
 with Ada.Strings.Fixed;                 use Ada.Strings, Ada.Strings.Fixed;
-with Ada.Text_IO;                       use Ada.Text_IO;
+--  with Ada.Text_IO;                       -- use Ada.Text_IO;
 
 with System.Storage_Elements;
 with Ada.Containers.Generic_Array_Sort;
@@ -1068,7 +1068,8 @@ package body GLOBE_3D is
 
    procedure render (the_Visuals : Visual_array; the_Camera : Camera) is
 
-      use REF, G3DM;
+--        use REF, G3DM;
+      use G3DM;
 
       all_Transparents  : GLOBE_3D.Visual_array (1 .. 10_000);
       transparent_Count : Natural   := 0;
@@ -1139,7 +1140,8 @@ package body GLOBE_3D is
          procedure sort is new Ada.Containers.Generic_Array_Sort (Positive,
                                                                   Visual_Geometry,
                                                                   Visual_Geometries);
-         use GL.Skins, GL.Geometry, GL.Skinned_Geometry;
+--           use GL.Skins, GL.Geometry, GL.Skinned_Geometry;
+         use GL.Skins, GL.Geometry;
 
          current_Visual : p_Visual;
 

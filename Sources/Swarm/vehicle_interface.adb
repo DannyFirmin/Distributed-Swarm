@@ -11,7 +11,7 @@ with Swarm_Structures;           use Swarm_Structures;
 
 package body Vehicle_Interface is
 
-   use Swarm_Vectors;
+--     use Swarm_Vectors;
 
    -----------
    -- State --

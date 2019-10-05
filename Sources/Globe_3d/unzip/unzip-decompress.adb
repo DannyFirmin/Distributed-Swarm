@@ -350,7 +350,8 @@ package body UnZip.Decompress is
          end Bit_buffer;
 
          procedure Flush (x : Natural) is
-            use Zip, UnZip, Ada.Streams;
+--              use Zip, UnZip, Ada.Streams;
+            use Zip, Ada.Streams;
             user_aborting : Boolean;
          begin
             if full_trace then
@@ -581,7 +582,8 @@ package body UnZip.Decompress is
          Writebuf  : Zip.Byte_Buffer (0 .. Write_Max);  -- Write buffer
 
          procedure Unshrink_Flush is
-            use Zip, UnZip, Ada.Streams, Ada.Streams.Stream_IO;
+--              use Zip, UnZip, Ada.Streams, Ada.Streams.Stream_IO;
+            use Zip, Ada.Streams, Ada.Streams.Stream_IO;
             user_aborting : Boolean;
          begin
             if full_trace then
@@ -1776,9 +1778,9 @@ package body UnZip.Decompress is
                end case;
             end loop;
 
-            pragma Warnings (Off, """Tl"" modified by call, but value overwritten at line 1789");
+            pragma Warnings (Off, """Tl"" modified by call, but value overwritten at line 1791");
             HufT_free (Tl);      -- free decoding table for trees
-            pragma Warnings (On,  """Tl"" modified by call, but value overwritten at line 1789");
+            pragma Warnings (On,  """Tl"" modified by call, but value overwritten at line 1791");
 
             -- Build the decoding tables for literal/length codes
             Bl := Lbits;

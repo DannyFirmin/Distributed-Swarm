@@ -1,7 +1,8 @@
 package body GL.Math is
 
    use Ada.Numerics;
-   use GL, REF;
+--     use GL, REF;
+   use REF;
 
    -------------
    -- Vectors --

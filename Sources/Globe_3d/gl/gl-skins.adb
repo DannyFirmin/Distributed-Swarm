@@ -56,7 +56,7 @@ package body GL.Skins is
 
    procedure Set_Material (m : Materials.Material_type) is
 
-      use GL;
+--        use GL;
 
    begin
       Material (FRONT_AND_BACK, AMBIENT,   m.ambient);

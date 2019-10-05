@@ -2,9 +2,9 @@
 -- Jan & Uwe R. Zimmer, Australia, September 2019
 --
 
-with Ada.Numerics;                              use Ada.Numerics;
+with Ada.Numerics;                              -- use Ada.Numerics;
 with Ada.Numerics.Generic_Elementary_Functions;
-with Ada.Strings.Bounded;                       use Ada.Strings.Bounded;
+with Ada.Strings.Bounded;                       -- use Ada.Strings.Bounded;
 
 package body Vectors_xD is
 

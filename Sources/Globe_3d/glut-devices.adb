@@ -137,7 +137,7 @@ package body GLUT.Devices is
 
    procedure Initialize is
 
-      use GLUT;
+--        use GLUT;
 
    begin
       IgnoreKeyRepeat (1);

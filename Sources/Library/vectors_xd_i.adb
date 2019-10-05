@@ -3,7 +3,7 @@
 --
 
 with Ada.Numerics.Generic_Elementary_Functions;
-with Ada.Strings.Bounded;                       use Ada.Strings.Bounded;
+with Ada.Strings.Bounded;                       -- use Ada.Strings.Bounded;
 
 package body Vectors_xD_I is
 

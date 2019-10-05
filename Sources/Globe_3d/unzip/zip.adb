@@ -439,7 +439,8 @@ package body Zip is
       header     : Zip.Headers.Central_File_Header;
       min_offset : File_size_type;
 
-      use Ada.Streams.Stream_IO, Zip_Streams;
+--        use Ada.Streams.Stream_IO, Zip_Streams;
+      use Zip_Streams;
 
    begin
       Zip.Headers.Load (file, the_end);
@@ -486,7 +487,8 @@ package body Zip is
 
       header  : Zip.Headers.Central_File_Header;
 
-      use Ada.Streams, Ada.Streams.Stream_IO, Zip_Streams;
+--        use Ada.Streams, Ada.Streams.Stream_IO, Zip_Streams;
+      use Zip_Streams;
 
    begin
       Zip.Headers.Load (file, the_end);
@@ -616,7 +618,8 @@ package body Zip is
                         buffer        : out Byte_Buffer;
                         actually_read : out Natural) is
 
-      use Ada.Streams, Ada.Streams.Stream_IO, Zip_Streams;
+--        use Ada.Streams, Ada.Streams.Stream_IO, Zip_Streams;
+      use Ada.Streams, Zip_Streams;
 
       SE_Buffer    : Stream_Element_Array (1 .. buffer'Length);
       for SE_Buffer'Address use buffer'Address;

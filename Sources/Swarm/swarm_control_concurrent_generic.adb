@@ -5,7 +5,7 @@
 with Exceptions;            use Exceptions;
 with Swarm_Control;         use Swarm_Control;
 with Swarm_Data;            use Swarm_Data;
-with Swarm_Structures;      use Swarm_Structures;
+with Swarm_Structures;      -- use Swarm_Structures;
 with Swarm_Structures_Base; use Swarm_Structures_Base;
 
 package body Swarm_Control_Concurrent_Generic is
@@ -81,7 +81,7 @@ package body Swarm_Control_Concurrent_Generic is
 
    procedure Distribute_Jobs (Job : Job_Type) is
 
-      use Swarm_Vectors;
+      use Swarm_Structures.Swarm_Vectors;
 
       First_Element_Ix  : constant Swarm_Element_Index := First_Index (Swarm_State);
       Last_Element_Ix   : constant Swarm_Element_Index := Last_Index  (Swarm_State);

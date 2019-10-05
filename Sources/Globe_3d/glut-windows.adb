@@ -215,7 +215,8 @@ package body GLUT.Windows is
    procedure Display_status (Self  : in out Window;
                              sec   : GLOBE_3D.Real) is
 
-      use G3D, G3D.REF;
+--        use G3D, G3D.REF;
+      use G3D;
 
       light_info  : String (1 .. 8);
 
@@ -518,7 +519,7 @@ package body GLUT.Windows is
 
    procedure Start_GLUTs (Self  : in out Window) is
 
-      use GLUT;
+--        use GLUT;
 
       function to_Address is new Ada.Unchecked_Conversion (GLOBE_3D.p_Window, System.Address);
 
